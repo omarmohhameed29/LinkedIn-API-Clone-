@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status
 from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
@@ -40,3 +40,15 @@ def create_post(post: Post):
     post_dict['id'] = randrange(0, 1000000)
     my_posts.append(post_dict)
     return {"Data of body": post_dict}
+
+
+@app.get('/posts/{id}')
+def get_post(id: int, response: Response):
+    for post in my_posts:
+        if post['id'] == id: 
+            return {"Curr post": post}
+    # response.status_code = 404
+    response.status_code = status.HTTP_404_NOT_FOUND
+    return {"data": 'Not Existed'}
+
+
