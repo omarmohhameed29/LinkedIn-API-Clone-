@@ -1,6 +1,22 @@
 from fastapi import FastAPI
+from fastapi.params import Body
+from pydantic import BaseModel
+from typing import Optional
+from random import randrange
 
 app = FastAPI()
+
+class Post(BaseModel):
+    title: str
+    content: str
+    published: bool = True
+    rating: Optional[int] = None
+
+
+my_posts = [
+    {"title": "title of post 1", "content": "content of post 1", "id": 1},
+    {"title": "favourite foods", "content": "I like pizza", "id": 2}
+]
 
 @app.get('/')   # @<app name>.<method>('</path>')
 def root():
@@ -8,10 +24,19 @@ def root():
 
 @app.get('/posts')
 def get_posts():
-    return {'data': 'this is new post'}
+    return {'data': my_posts}
 
 
 # will not appear, the first path only executes
-@app.get('/posts')
-def get_posts():
-    return {'data': 'this is second post'}
+# @app.get('/posts')
+# def get_posts():
+#     return {'data': 'this is second post'}
+
+
+
+@app.post('/posts')
+def create_post(post: Post):
+    post_dict = post.model_dump()
+    post_dict['id'] = randrange(0, 1000000)
+    my_posts.append(post_dict)
+    return {"Data of body": post_dict}
