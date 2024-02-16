@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, Response, status, HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
@@ -48,7 +48,7 @@ def get_post(id: int, response: Response):
         if post['id'] == id: 
             return {"Curr post": post}
     # response.status_code = 404
-    response.status_code = status.HTTP_404_NOT_FOUND
-    return {"data": 'Not Existed'}
+    # response.status_code = status.HTTP_404_NOT_FOUND
+    raise HTTPException(404, 'ID not found')
 
 
