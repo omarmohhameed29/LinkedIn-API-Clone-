@@ -12,6 +12,10 @@ class Post(BaseModel):
     published: bool = True
     rating: Optional[int] = None
 
+def find_post_index(id):
+    for post in my_posts:
+        if post['id'] == id:
+            return id
 
 my_posts = [
     {"title": "title of post 1", "content": "content of post 1", "id": 1},
@@ -52,3 +56,15 @@ def get_post(id: int, response: Response):
     raise HTTPException(404, 'ID not found')
 
 
+@app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_post(id: int):
+    # Find the index of the post with the given ID
+    index = find_post_index(id)
+
+    # If the index is None, the post with the given ID was not found
+    if index is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ID Not Exists")
+
+    # If the post is found, delete it (you may want to implement the deletion logic here)
+    # For now, the code raises a 204 No Content response without deleting anything
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
