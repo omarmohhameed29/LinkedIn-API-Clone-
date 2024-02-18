@@ -3,6 +3,9 @@ from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
 from random import randrange
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import time
 
 app = FastAPI()
 
@@ -11,6 +14,17 @@ class Post(BaseModel):
     content: str
     published: bool = True
     rating: Optional[int] = None
+
+while True:
+    try:
+        conn = psycopg2.connect(host='localhost', database='fastapi', user='postgres', password=2912002, cursor_factory=RealDictCursor)
+        cursor = conn.cursor()
+        print('Connect to DB')
+        break
+    except Exception as e:
+        print('Could not connect to DB')
+        print(e)
+        time.sleep(2)
 
 def find_post_index(id):
     for i, post in enumerate(my_posts):
