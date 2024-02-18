@@ -42,14 +42,10 @@ def root():
 
 @app.get('/posts')
 def get_posts():
-    return {'data': my_posts}
-
-
-# will not appear, the first path only executes
-# @app.get('/posts')
-# def get_posts():
-#     return {'data': 'this is second post'}
-
+    cursor.execute(""" SELECT * FROM posts """)
+    posts = cursor.fetchall()
+    print(posts)
+    return {'data': posts}
 
 
 @app.post('/posts', status_code=status.HTTP_201_CREATED)
