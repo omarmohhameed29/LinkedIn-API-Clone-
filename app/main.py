@@ -57,11 +57,9 @@ def root():
     return{'message': 'Welcome to our website'}
 
 @app.get('/posts')
-def get_posts():
-    cursor.execute(""" SELECT * FROM posts """)
-    posts = cursor.fetchall()
-    print(posts)
-    return {'data': posts}
+def get_posts(db: Session = Depends(get_db)):
+    return db.query(models.Post).all()
+
 
 
 @app.get('/sqlalchemy')
@@ -69,7 +67,7 @@ def test_posts(db: Session = Depends(get_db)):
     return db.query(models.Post).all()
 
 @app.post('/posts', status_code=status.HTTP_201_CREATED)
-def create_post(post: Post):
+def create_post(post: Post, db: Session = Depends(get_db)):
     cursor.execute("""INSERT INTO posts(title, content, published) VALUES (%s,%s,%s) RETURNING * """, (
         post.title, post.content, post.published))
     new_post = cursor.fetchone()
