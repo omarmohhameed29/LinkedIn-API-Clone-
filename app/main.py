@@ -76,11 +76,6 @@ def create_post(post: Post, db: Session = Depends(get_db)):
 
 @app.get('/posts/{id}')
 def get_post(id: int, db: Session = Depends(get_db)):
-    # cursor.execute("""SELECT * FROM posts WHERE id = %s""", (id,))
-    # post = cursor.fetchone()
-    # if post:
-    #     return {"Data": post}
-    # raise HTTPException(404, 'ID not found')
     post = db.query(models.Post).filter(models.Post.id == id).first()
     if post:
         return {"Data": post}
@@ -88,18 +83,25 @@ def get_post(id: int, db: Session = Depends(get_db)):
 
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
-    cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (id,))
-    deleted_post = cursor.fetchone()
-    conn.commit()
+def delete_post(id: int, db: Session = Depends(get_db)):
+    # cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (id,))
+    # deleted_post = cursor.fetchone()
+    # conn.commit()
 
-    if deleted_post is None:
+    # if deleted_post is None:
+    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ID Not Exists")
+
+    # # If the post is found, delete it (you may want to implement the deletion logic here)
+    # # For now, the code raises a 204 No Content response without deleting anything
+    # return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    deleted_post = db.query(models.Post).filter(models.Post.id == id)
+    if deleted_post.first() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ID Not Exists")
-
-    # If the post is found, delete it (you may want to implement the deletion logic here)
-    # For now, the code raises a 204 No Content response without deleting anything
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
+        
+    deleted_post.delete(synchronize_session=False)
+    db.commit()
+    
 @app.put('/posts/{id}')
 def update_post(id: int, post: Post):
     cursor.execute("""UPDATE posts SET title = %s, content = %s WHERE id = %s RETURNING *""", (post.title, post.content,id))
