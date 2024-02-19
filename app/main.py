@@ -6,8 +6,22 @@ from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
+from . import models
+from .database import engine, SessionLocal
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 class Post(BaseModel):
     title: str
@@ -17,7 +31,8 @@ class Post(BaseModel):
 
 while True:
     try:
-        conn = psycopg2.connect(host='localhost', database='fastapi', user='postgres', password=2912002, cursor_factory=RealDictCursor)
+        conn = psycopg2.connect(host='localhost', database='fastapi', user='postgres', 
+                                password=2912002, cursor_factory=RealDictCursor)
         cursor = conn.cursor()
         print('Connect to DB')
         break
@@ -68,10 +83,12 @@ def get_post(id: int):
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    cursor.execute("""DELETE FROM posts WHERE id = %s""", (id,))
+    cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (id,))
+    deleted_post = cursor.fetchone()
     conn.commit()
-    # if index is None:
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ID Not Exists")
+
+    if deleted_post is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ID Not Exists")
 
     # If the post is found, delete it (you may want to implement the deletion logic here)
     # For now, the code raises a 204 No Content response without deleting anything
@@ -79,12 +96,11 @@ def delete_post(id: int):
 
 @app.put('/posts/{id}')
 def update_post(id: int, post: Post):
-    index = find_post_index(id)
-    if index is None:
+    cursor.execute("""UPDATE posts SET title = %s, content = %s WHERE id = %s RETURNING *""", (post.title, post.content,id))
+    updated_post = cursor.fetchone()
+    conn.commit()
+
+    if updated_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='ID Not Exists')
 
-    post_dict = post.model_dump()
-    post_dict['id'] = id
-    my_posts[index] = post_dict
-
-    return {"Message": post_dict}
+    return {"Message": update_post}
