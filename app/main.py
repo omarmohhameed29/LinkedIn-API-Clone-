@@ -28,7 +28,6 @@ class Post(BaseModel):
     title: str
     content: str
     published: bool = True
-    rating: Optional[int] = None
 
 while True:
     try:
@@ -68,7 +67,7 @@ def test_posts(db: Session = Depends(get_db)):
 
 @app.post('/posts', status_code=status.HTTP_201_CREATED)
 def create_post(post: Post, db: Session = Depends(get_db)):
-    db_item = models.Post(title=post.title, content=post.content, published=post.published)
+    db_item = models.Post(**post.model_dump())
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
