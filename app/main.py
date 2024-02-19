@@ -66,7 +66,7 @@ def get_posts():
 
 @app.get('/sqlalchemy')
 def test_posts(db: Session = Depends(get_db)):
-    return {"users" :"loaded"}
+    return db.query(models.Post).all()
 
 @app.post('/posts', status_code=status.HTTP_201_CREATED)
 def create_post(post: Post):
