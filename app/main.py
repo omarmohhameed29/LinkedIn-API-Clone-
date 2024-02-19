@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Response, status, HTTPException
+from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
 from random import randrange
@@ -62,6 +63,10 @@ def get_posts():
     print(posts)
     return {'data': posts}
 
+
+@app.get('/sqlalchemy')
+def test_posts(db: Session = Depends(get_db)):
+    return {"users" :"loaded"}
 
 @app.post('/posts', status_code=status.HTTP_201_CREATED)
 def create_post(post: Post):
