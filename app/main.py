@@ -84,17 +84,6 @@ def get_post(id: int, db: Session = Depends(get_db)):
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
-    # cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (id,))
-    # deleted_post = cursor.fetchone()
-    # conn.commit()
-
-    # if deleted_post is None:
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ID Not Exists")
-
-    # # If the post is found, delete it (you may want to implement the deletion logic here)
-    # # For now, the code raises a 204 No Content response without deleting anything
-    # return Response(status_code=status.HTTP_204_NO_CONTENT)
-
     deleted_post = db.query(models.Post).filter(models.Post.id == id)
     if deleted_post.first() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ID Not Exists")
@@ -103,12 +92,21 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     db.commit()
     
 @app.put('/posts/{id}')
-def update_post(id: int, post: Post):
-    cursor.execute("""UPDATE posts SET title = %s, content = %s WHERE id = %s RETURNING *""", (post.title, post.content,id))
-    updated_post = cursor.fetchone()
-    conn.commit()
+def update_post(id: int, post: Post, db: Session = Depends(get_db)):
+    # cursor.execute("""UPDATE posts SET title = %s, content = %s WHERE id = %s RETURNING *""", (post.title, post.content,id))
+    # updated_post = cursor.fetchone()
+    # conn.commit()
+
+    # if updated_post is None:
+    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='ID Not Exists')
+
+    # return {"Message": update_post}
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    updated_post = post_query.first()
 
     if updated_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='ID Not Exists')
 
-    return {"Message": update_post}
+    post_query.update(post.model_dump(), synchronize_session=False)
+    db.commit()
+    return {"Data": post_query.first()}
