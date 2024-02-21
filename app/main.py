@@ -1,14 +1,14 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
 from typing import Optional
 from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
-from . import models
+from . import models, schemas
 from .database import engine, SessionLocal
+
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -24,10 +24,7 @@ def get_db():
         db.close()
 
 
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
+
 
 while True:
     try:
@@ -60,13 +57,8 @@ def get_posts(db: Session = Depends(get_db)):
     return db.query(models.Post).all()
 
 
-
-@app.get('/sqlalchemy')
-def test_posts(db: Session = Depends(get_db)):
-    return db.query(models.Post).all()
-
 @app.post('/posts', status_code=status.HTTP_201_CREATED)
-def create_post(post: Post, db: Session = Depends(get_db)):
+def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     db_item = models.Post(**post.model_dump())
     db.add(db_item)
     db.commit()
@@ -78,7 +70,7 @@ def create_post(post: Post, db: Session = Depends(get_db)):
 def get_post(id: int, db: Session = Depends(get_db)):
     post = db.query(models.Post).filter(models.Post.id == id).first()
     if post:
-        return {"Data": post}
+        return schemas.post
     raise HTTPException(404, 'ID not found')
 
 
@@ -92,21 +84,13 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     db.commit()
     
 @app.put('/posts/{id}')
-def update_post(id: int, post: Post, db: Session = Depends(get_db)):
-    # cursor.execute("""UPDATE posts SET title = %s, content = %s WHERE id = %s RETURNING *""", (post.title, post.content,id))
-    # updated_post = cursor.fetchone()
-    # conn.commit()
-
-    # if updated_post is None:
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='ID Not Exists')
-
-    # return {"Message": update_post}
+def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
-    updated_post = post_query.first()
+    post = post_query.first()
 
-    if updated_post is None:
+    if post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='ID Not Exists')
 
-    post_query.update(post.model_dump(), synchronize_session=False)
+    post_query.update(updated_post.model_dump(), synchronize_session=False)
     db.commit()
-    return {"Data": post_query.first()}
+    return schemas.post_query.first()
