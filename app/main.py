@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -52,12 +52,20 @@ my_posts = [
 def root():
     return{'message': 'Welcome to our website'}
 
-@app.get('/posts')
+@app.get('/posts', response_model=List[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     return db.query(models.Post).all()
 
 
-@app.post('/posts', status_code=status.HTTP_201_CREATED)
+@app.get('/posts/{id}', response_model=schemas.Post)
+def get_post(id: int, db: Session = Depends(get_db)):
+    post = db.query(models.Post).filter(models.Post.id == id).first()
+    if post:
+        return post
+    raise HTTPException(404, 'ID not found')
+
+
+@app.post('/posts', status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     db_item = models.Post(**post.model_dump())
     db.add(db_item)
@@ -66,12 +74,7 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     return db_item
 
 
-@app.get('/posts/{id}')
-def get_post(id: int, db: Session = Depends(get_db)):
-    post = db.query(models.Post).filter(models.Post.id == id).first()
-    if post:
-        return schemas.post
-    raise HTTPException(404, 'ID not found')
+
 
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
@@ -83,7 +86,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     deleted_post.delete(synchronize_session=False)
     db.commit()
     
-@app.put('/posts/{id}')
+@app.put('/posts/{id}', response_model=schemas.Post)
 def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     post = post_query.first()
@@ -93,4 +96,4 @@ def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends
 
     post_query.update(updated_post.model_dump(), synchronize_session=False)
     db.commit()
-    return schemas.post_query.first()
+    return post_query.first()
