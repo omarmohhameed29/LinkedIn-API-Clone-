@@ -6,24 +6,17 @@ from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
-from . import models, schemas
+from . import models, schemas, utils
 from .database import engine, SessionLocal
-from passlib.context import CryptContext
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from .routers import post, user
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
 
 
 
@@ -40,73 +33,15 @@ while True:
         print(e)
         time.sleep(2)
 
-def find_post_index(id):
-    for i, post in enumerate(my_posts):
-        if post['id'] == id:
-            return i
 
-my_posts = [
-    {"title": "title of post 1", "content": "content of post 1", "id": 1},
-    {"title": "favourite foods", "content": "I like pizza", "id": 2}
-]
+
+app.include_router(post.router)
+app.include_router(user.router)
+
 
 @app.get('/')   # @<app name>.<method>('</path>')
 def root():
     return{'message': 'Welcome to our website'}
 
-@app.get('/posts', response_model=List[schemas.Post])
-def get_posts(db: Session = Depends(get_db)):
-    return db.query(models.Post).all()
 
 
-@app.get('/posts/{id}', response_model=schemas.Post)
-def get_post(id: int, db: Session = Depends(get_db)):
-    post = db.query(models.Post).filter(models.Post.id == id).first()
-    if post:
-        return post
-    raise HTTPException(404, 'ID not found')
-
-
-@app.post('/posts', status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
-    db_item = models.Post(**post.model_dump())
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
-    return db_item
-
-
-
-
-
-@app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int, db: Session = Depends(get_db)):
-    deleted_post = db.query(models.Post).filter(models.Post.id == id)
-    if deleted_post.first() is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ID Not Exists")
-        
-    deleted_post.delete(synchronize_session=False)
-    db.commit()
-    
-@app.put('/posts/{id}', response_model=schemas.Post)
-def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
-    post_query = db.query(models.Post).filter(models.Post.id == id)
-    post = post_query.first()
-
-    if post is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='ID Not Exists')
-
-    post_query.update(updated_post.model_dump(), synchronize_session=False)
-    db.commit()
-    return post_query.first()
-
-
-@app.post('/users', status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    hashed_password = pwd_context.hash(user.password)
-    user.password = hashed_password
-    new_user = models.User(**user.model_dump())
-    db.add(new_user) 
-    db.commit()
-    db.refresh(new_user)
-    return new_user

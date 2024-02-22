@@ -2,4 +2,5 @@ fastapi
 postman
 connect to postgresql via psycopg2 driver
 SQLALchemy ORM
+password hashing
 
