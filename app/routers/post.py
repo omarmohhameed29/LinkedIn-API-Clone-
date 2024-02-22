@@ -4,15 +4,17 @@ from .. import models, schemas, utils
 from ..database import engine, get_db
 from typing import List
 
-router = APIRouter()
+router = APIRouter(
+    prefix='/posts'
+)
 
 
-@router.get('/posts', response_model=List[schemas.Post])
+@router.get('/', response_model=List[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     return db.query(models.Post).all()
 
 
-@router.get('/posts/{id}', response_model=schemas.Post)
+@router.get('/{id}', response_model=schemas.Post)
 def get_post(id: int, db: Session = Depends(get_db)):
     post = db.query(models.Post).filter(models.Post.id == id).first()
     if post:
@@ -20,7 +22,7 @@ def get_post(id: int, db: Session = Depends(get_db)):
     raise HTTPException(404, 'ID not found')
 
 
-@router.post('/posts', status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
+@router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     db_item = models.Post(**post.model_dump())
     db.add(db_item)
@@ -32,7 +34,7 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
 
 
 
-@router.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
     deleted_post = db.query(models.Post).filter(models.Post.id == id)
     if deleted_post.first() is None:
@@ -41,7 +43,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     deleted_post.delete(synchronize_session=False)
     db.commit()
     
-@router.put('/posts/{id}', response_model=schemas.Post)
+@router.put('/{id}', response_model=schemas.Post)
 def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     post = post_query.first()
