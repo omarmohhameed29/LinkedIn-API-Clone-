@@ -44,7 +44,7 @@ class Vote(BaseModel):
     dir: conint(le=1)     # type: ignore
 
 
-class PostOut(Post):
+class PostOut(BaseModel):
     Post: Post
     votes: int
 

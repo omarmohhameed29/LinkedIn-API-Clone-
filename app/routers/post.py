@@ -12,7 +12,7 @@ router = APIRouter(
 
 
 # @router.get('/', response_model=List[schemas.Post])
-@router.get('/')
+@router.get('/', response_model=List[schemas.PostOut])
 def get_posts(db: Session = Depends(get_db), 
               current_user: int = Depends(oauth2.get_current_user), 
               limit: int = 10,
@@ -25,14 +25,14 @@ def get_posts(db: Session = Depends(get_db),
     return result
 
 
-@router.get('/{id}', response_model=schemas.Post)
+@router.get('/{id}', response_model=schemas.PostOut)
 def get_post(id: int, db: Session = Depends(get_db), current_user : int = Depends(oauth2.get_current_user)):
-    post = db.query(models.Post).filter(models.Post.id == id).first()
-
+    post = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).filter(models.Post.id == id).join(models.Vote, isouter=True).group_by(models.Post.id)
+    print(post)
     if not post:
         raise HTTPException(404, 'ID not found')
 
-    return post
+    return post.first()
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
