@@ -38,10 +38,18 @@ class Post(PostBase):
         orm_mode = True
 
 
+
 class Vote(BaseModel):
     post_id: int
     dir: conint(le=1)     # type: ignore
 
+
+class PostOut(Post):
+    Post: Post
+    votes: int
+
+    class Config:
+        orm_mode = True
 
 class Token(BaseModel):
     access_token: str

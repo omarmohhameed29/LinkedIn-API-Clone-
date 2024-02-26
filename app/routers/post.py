@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas, utils, oauth2
 from ..database import engine, get_db
 from typing import List, Optional
+from sqlalchemy import func
 
 router = APIRouter(
     prefix='/posts',
@@ -10,14 +11,18 @@ router = APIRouter(
 )
 
 
-@router.get('/', response_model=List[schemas.Post])
+# @router.get('/', response_model=List[schemas.Post])
+@router.get('/')
 def get_posts(db: Session = Depends(get_db), 
               current_user: int = Depends(oauth2.get_current_user), 
               limit: int = 10,
               skip: int = 0,
               search: Optional[str] = ""):
-    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
-    return posts
+    
+    result = db.query(models.Post, func.count(models.Vote.post_id).label("votes"))\
+        .join(models.Vote, isouter=True)\
+            .group_by(models.Post.id).all()
+    return result
 
 
 @router.get('/{id}', response_model=schemas.Post)
