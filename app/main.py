@@ -30,7 +30,7 @@ app.include_router(vote.router)
 
 @app.get('/')   # @<app name>.<method>('</path>')
 def root(): 
-    return{'message': 'Welcome to our'}
+    return{'message': 'Welcome to LinkedIn API'}
 
 
 
