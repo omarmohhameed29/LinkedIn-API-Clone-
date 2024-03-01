@@ -1,4 +1,5 @@
 # uvicorn app.main:app --reload
+# run container: docker run --network host -it linkedin_api
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware 
 
@@ -29,7 +30,7 @@ app.include_router(vote.router)
 
 @app.get('/')   # @<app name>.<method>('</path>')
 def root(): 
-    return{'message': 'Welcome to LinkedIn API'}
+    return{'message': 'Welcome to our'}
 
 
 
