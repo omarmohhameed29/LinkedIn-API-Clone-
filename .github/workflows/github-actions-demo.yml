@@ -43,8 +43,8 @@ jobs:
           context: .
           push: true
           tags:  ${{ secrets.DOCKERHUB_USERNAME }}/linkedin_api:latest
-          cache-from: type=registry,ref=user/app:buildcache
-          cache-to: type=registry,ref=user/app:buildcache,mode=max
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/linkedin_api:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/linkedin_api:buildcache,mode=max
 
     services:
       # Label used to access the service container
