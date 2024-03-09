@@ -14,7 +14,6 @@
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
 - [Docker Image](#docker-image)
-  - [Prerequisites](#prerequisites)
   - [Pull Image](#pull-the-docker-image)
 
 
